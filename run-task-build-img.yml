@@ -6,5 +6,18 @@ spec:
   workspaces:
     - name: kaniko
       emptyDir: {}
+  params:
+    - name: git-url
+      value: ""
+    - name: git-credential-secret-name
+      value: ""
+    - name: docker-registry
+      value: ""
+    - name: docker-registry-secret-name
+      value: ""
+    - name: image-tag
+      value: "latest"
+    - name: kaniko-image-url
+      value: "gcr.io/kaniko-project/executor:v1.9.1"
   taskRef:
     name: kaniko-build-echo-image
