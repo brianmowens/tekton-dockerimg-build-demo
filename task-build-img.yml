@@ -22,6 +22,9 @@ spec:
       type: string
       default: gcr.io/kaniko-project/executor:v1.9.1
       description: Path to the Kaniko image.
+    - name: docker-registry-secret-name
+      type: string
+      description: Name of the secret with docker registry credentials.
   workspaces:
     - name: kaniko
       description: |
@@ -33,7 +36,7 @@ spec:
         - name: GITHUB_TOKEN
           valueFrom:
             secretKeyRef:
-              name: github-pat-secret
+              name: $(params.docker-registry-secret-name)
               key: password
       script: |
         git clone https://anything:$GITHUB_TOKEN@$(params.git-url) $(workspaces.kaniko.path)
