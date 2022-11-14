@@ -1,0 +1,10 @@
+apiVersion: tekton.dev/v1beta1
+kind: TaskRun
+metadata:
+  generateName: run-kaniko-
+spec:
+  workspaces:
+    - name: kaniko
+      emptyDir: {}
+  taskRef:
+    name: kaniko-build-echo-image

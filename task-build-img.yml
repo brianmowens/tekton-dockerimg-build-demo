@@ -1,0 +1,59 @@
+apiVersion: tekton.dev/v1beta1
+kind: Task
+metadata:
+  name: kaniko-build-echo-image
+  namespace: tekton-demo
+spec:
+  params:
+    - name: git-url
+      type: string
+      description: Git url of the repository where the Dockerfile is stored.
+    - name: git-credential-secret-name
+      type: string
+      description: Name of the Kubernetes secret for use with Git authentication.
+    - name: docker-registry
+      type: string
+      description: Address of destination Docker image repository.
+    - name: image-tag
+      type: string
+      default: latest
+      description: Tag assigned to the generated Docker image.
+    - name: kaniko-image-url
+      type: string
+      default: gcr.io/kaniko-project/executor:v1.9.1
+      description: Path to the Kaniko image.
+  workspaces:
+    - name: kaniko
+      description: |
+        Kaniko working folder
+  steps:
+    - image: alpine/git
+      name: git-clone
+      env:
+        - name: GITHUB_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: github-pat-secret
+              key: password
+      script: |
+        git clone https://anything:$GITHUB_TOKEN@$(params.git-url) $(workspaces.kaniko.path)
+        ls -lah $(workspaces.kaniko.path)
+      workingDir: $(workspaces.kaniko.path)
+    - image: $(params.kaniko-image-url)
+      name: kaniko-build
+      resources: {}
+      args: ["--dockerfile=$(workspaces.kaniko.path)/Dockerfile",
+            "--context=dir://workspace",
+            "--destination=$(params.docker-registry):$(params.image-tag)"]
+      volumeMounts:
+        - name: docker-config
+          mountPath: /kaniko/.docker
+  volumes:
+    - name: docker-config
+      projected:
+        sources:
+        - secret:
+            name: $(params.git-credential-secret-name)
+            items:
+              - key: .dockerconfigjson
+                path: config.json
